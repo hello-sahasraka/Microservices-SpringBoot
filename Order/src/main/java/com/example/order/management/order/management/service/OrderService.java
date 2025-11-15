@@ -1,6 +1,7 @@
 package com.example.order.management.order.management.service;
 
 import com.example.inventory.management.dto.InventoryDTO;
+import com.example.product.product.management.dto.ProductDTO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.example.order.management.order.management.common.ErrorOrderResponse;
 import com.example.order.management.order.management.common.OrderResponse;
@@ -14,6 +15,7 @@ import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 
@@ -47,19 +49,32 @@ public class OrderService {
                     .bodyToMono(InventoryDTO.class)
                     .block();
 
-            System.out.println(inventoryResponse);
-
             assert inventoryResponse != null;
+            Integer productId = inventoryResponse.getProductId();
+
+            ProductDTO productResponse = webClient.get()
+                    .uri("http://localhost:8080/api/v1/getproductbyproductid/{productId}", productId)
+                    .retrieve()
+                    .bodyToMono(ProductDTO.class)
+                    .block();
+
             if (inventoryResponse.getQuantity() > 0) {
-                Order mappedOrder = modelMapper.map(orderDTO, Order.class);
-                java.util.Objects.requireNonNull(mappedOrder, "Mapped order is null");
-                Order savedOrder = orderRepo.save(mappedOrder);
-                return new SuccessOrderResponse(modelMapper.map(savedOrder, OrderDTO.class));
+
+                if (productResponse.isForSale()) {
+                    Order mappedOrder = modelMapper.map(orderDTO, Order.class);
+                    java.util.Objects.requireNonNull(mappedOrder, "Mapped order is null");
+                    Order savedOrder = orderRepo.save(mappedOrder);
+                    return new SuccessOrderResponse(modelMapper.map(savedOrder, OrderDTO.class));
+                } else {
+                    return new ErrorOrderResponse("Item is not for sale!");
+                }
             } else {
                 return new ErrorOrderResponse("Item not available!");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (WebClientResponseException e) {
+            if (e.getStatusCode().is5xxServerError()) {
+                return new ErrorOrderResponse("Item not found!");
+            }
         }
         return null;
     }

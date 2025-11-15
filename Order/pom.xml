@@ -67,5 +67,10 @@
             <artifactId>Inventory</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.microservices</groupId>
+            <artifactId>Product</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
     </dependencies>
 </project>
