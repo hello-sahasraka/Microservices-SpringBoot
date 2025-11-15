@@ -21,6 +21,11 @@ public class InventoryController {
         return inventoryService.getAllInventoryItems();
     }
 
+    @GetMapping("getinventoryitembyitemid/{id}")
+    public InventoryDTO  getInventoryItemByItemId(@PathVariable int id) {
+        return inventoryService.getInventoryItemByItemId(id);
+    }
+
     @PostMapping("/createinventoryitem")
     public InventoryDTO createInventoryItem(@RequestBody InventoryDTO inventoryDTO) {
         return inventoryService.createInventoryItem(inventoryDTO);
