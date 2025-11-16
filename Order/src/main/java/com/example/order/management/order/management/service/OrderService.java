@@ -22,7 +22,7 @@ import java.util.List;
 @Service
 @Transactional
 public class OrderService {
-    private final WebClient webClient;
+    private final WebClient.Builder webClientBuilder;
 
     @Autowired
     private OrderRepo orderRepo;
@@ -30,8 +30,8 @@ public class OrderService {
     @Autowired
     private ModelMapper modelMapper;
 
-    public OrderService(WebClient webClient) {
-        this.webClient = webClient;
+    public OrderService(WebClient.Builder webClientBuilder) {
+        this.webClientBuilder = webClientBuilder;
     }
 
     public List<OrderDTO> getAllOrders() {
@@ -43,8 +43,9 @@ public class OrderService {
         int itemId = orderDTO.getItemId();
 
         try {
-            InventoryDTO inventoryResponse = webClient.get()
-                    .uri("http://localhost:8082/api/v1/getinventoryitembyitemid/{itemId}", itemId)
+            InventoryDTO inventoryResponse = webClientBuilder.build()
+                    .get()
+                    .uri("http://inventory-management/api/v1/getinventoryitembyitemid/{itemId}", itemId)
                     .retrieve()
                     .bodyToMono(InventoryDTO.class)
                     .block();
@@ -52,8 +53,9 @@ public class OrderService {
             assert inventoryResponse != null;
             Integer productId = inventoryResponse.getProductId();
 
-            ProductDTO productResponse = webClient.get()
-                    .uri("http://localhost:8080/api/v1/getproductbyproductid/{productId}", productId)
+            ProductDTO productResponse = webClientBuilder.build()
+                    .get()
+                    .uri("http://product-management/api/v1/getproductbyproductid/{productId}", productId)
                     .retrieve()
                     .bodyToMono(ProductDTO.class)
                     .block();
